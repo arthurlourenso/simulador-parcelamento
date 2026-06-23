@@ -84,46 +84,20 @@ input#vl::-webkit-outer-spin-button{-webkit-appearance:none}
 }
 .sec-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 
-/* ZONE 1 ROWS */
-.z1row{
+/* PROTAGONIST ROWS (zones A & B) */
+.prow{
   background:var(--surface);
-  display:flex;align-items:center;
-  padding:13px 14px;
+  padding:13px 14px 12px;
   border-bottom:1px solid #F2F0EC;
 }
-.z1row:last-child{border-bottom:none}
-.z1-type{width:52px;flex-shrink:0;font-size:15px;font-weight:700;color:var(--text)}
-.z1-body{flex:1;padding:0 6px 0 2px}
-.z1-cpaga{font-size:11px;color:var(--muted);margin-bottom:2px}
-.z1-net{font-size:15px;font-weight:700}
-.z1-fee{font-size:11px;color:var(--muted);margin-top:1px}
-.z1-badge{flex-shrink:0}
+.prow:last-child{border-bottom:none}
+.prow-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.prow-lbl{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted)}
+.prow-inst{font-size:27px;font-weight:800;letter-spacing:-1px;line-height:1.1;color:var(--text)}
+.prow-sep{height:1px;background:var(--border);margin:9px 0 8px}
+.prow-secondary{font-size:13px;color:var(--muted);margin-bottom:3px}
+.prow-tiny{font-size:10px;color:var(--ink-light)}
 .pill{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.3px;white-space:nowrap}
-
-/* ZONE 2 ROWS */
-.z2row{
-  background:var(--surface);
-  display:flex;align-items:stretch;
-  padding:0;border-bottom:1px solid #F2F0EC;
-}
-.z2row:last-child{border-bottom:none}
-.z2-type{
-  width:44px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:700;color:var(--amber);
-  background:var(--amber-bg);
-  border-right:1px solid var(--amber-border);
-}
-.z2-cobrar{
-  padding:12px 10px 10px;
-  flex-shrink:0;width:140px;
-  border-right:1px solid var(--border);
-}
-.z2-cobrar-lbl{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
-.z2-cobrar-val{font-size:20px;font-weight:800;color:var(--amber);letter-spacing:-.5px;line-height:1.1}
-.z2-info{flex:1;padding:11px 12px 10px}
-.z2-extra{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:3px}
-.z2-ok{font-size:12px;font-weight:700;color:var(--green)}
 
 /* NOTE */
 .note{
@@ -173,8 +147,8 @@ input#vl::-webkit-outer-spin-button{-webkit-appearance:none}
   <div class="sec-card">
     <div class="sec-hd" style="background:var(--amber-bg);color:var(--amber)">
       <div class="sec-dot" style="background:var(--amber-strong)"></div>
-      Juros repassados à cliente — 5x ou mais
-      <span style="margin-left:auto;background:var(--amber-border);color:var(--amber);font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;white-space:nowrap">cobrar valor ajustado</span>
+      5x ou mais — consultar antes
+      <span style="margin-left:auto;background:var(--amber-border);color:var(--amber);font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;white-space:nowrap">verificar c/ Arthur ou Dra. Jéssica</span>
     </div>
     <div id="z2"></div>
   </div>
@@ -210,60 +184,57 @@ function fmt(v){
 
 function calc(){
   const val=parseFloat(document.getElementById('vl').value)||0;
-  if(val<=0)return;
+  const z1=document.getElementById('z1');
+  const z2=document.getElementById('z2');
+  if(val<=0){z1.innerHTML='';z2.innerHTML='';return;}
   const rates=R[band];
 
-  // ZONE 1 — débito (0) até 4x (4)
-  const z1=document.getElementById('z1');
+  // ZONE A — débito (0) até 4x (4): cliente paga valor cheio, clínica absorve a taxa
   z1.innerHTML='';
   for(let i=0;i<=4;i++){
     const rate=rates[i];
     const fee=val*rate/100;
     const net=val-fee;
     const isLimit=i===4;
-    const isDebito=i===0;
+    const isSingle=i<=1; // Débito & À vista: pagamento único, sem parcela
+    const instCount=isSingle?1:i;
+    const instVal=val/instCount;
     const pct=rate.toFixed(2).replace('.',',');
-    const netPct=(net/val*100).toFixed(1);
-    // Color: green if >95%, amber if >90%, else warm red
-    const nc=net>=val*.95?'var(--green)':net>=val*.90?'var(--amber)':'var(--red)';
+    const instStr=isSingle?fmt(instVal):LBL[i]+'&thinsp;&thinsp;'+fmt(instVal);
 
     const row=document.createElement('div');
-    row.className='z1row'+(isLimit?' limit-row':'');
+    row.className='prow'+(isLimit?' limit-row':'');
     row.innerHTML=`
-      <div class="z1-type">${LBL[i]}</div>
-      <div class="z1-body">
-        <div class="z1-cpaga">Cliente paga ${fmt(val)}</div>
-        <div class="z1-net" style="color:${nc}">Clínica recebe ${fmt(net)}</div>
-        <div class="z1-fee">${isDebito?'Próximo dia útil — ':''}Taxa ${pct}% = ${fmt(fee)}</div>
-      </div>
-      <div class="z1-badge">
+      <div class="prow-top">
+        <span class="prow-lbl">${LBL[i]}</span>
         ${isLimit?'<span class="pill" style="background:var(--amber-bg);color:var(--amber)">limite</span>':''}
-      </div>`;
+      </div>
+      <div class="prow-inst">${instStr}</div>
+      <div class="prow-sep"></div>
+      <div class="prow-secondary">Clínica recebe ${fmt(net)}</div>
+      <div class="prow-tiny">taxa ${pct}% · ${fmt(fee)}</div>`;
     z1.appendChild(row);
   }
 
-  // ZONE 2 — 5x (5) até 12x (12)
-  const z2=document.getElementById('z2');
+  // ZONE B — 5x (5) até 12x (12): gross-up, clínica sempre recebe o valor cheio
   z2.innerHTML='';
   for(let i=5;i<=12;i++){
     const rate=rates[i];
     const grossed=val/(1-rate/100);
+    const instVal=grossed/i;
     const fee=grossed*rate/100;
-    const extra=grossed-val;
     const pct=rate.toFixed(2).replace('.',',');
 
     const row=document.createElement('div');
-    row.className='z2row';
+    row.className='prow';
     row.innerHTML=`
-      <div class="z2-type">${LBL[i]}</div>
-      <div class="z2-cobrar">
-        <div class="z2-cobrar-lbl">Cobrar</div>
-        <div class="z2-cobrar-val">${fmt(grossed)}</div>
+      <div class="prow-top">
+        <span class="prow-lbl" style="color:var(--amber)">${LBL[i]}</span>
       </div>
-      <div class="z2-info">
-        <div class="z2-extra">+${fmt(extra)} de juros<br>Taxa: ${pct}% = ${fmt(fee)}</div>
-        <div class="z2-ok">✓ Clínica recebe ${fmt(val)}</div>
-      </div>`;
+      <div class="prow-inst" style="color:var(--amber-strong)">${LBL[i]}&thinsp;&thinsp;${fmt(instVal)}</div>
+      <div class="prow-sep"></div>
+      <div class="prow-secondary" style="color:var(--green);font-weight:600">✓ Clínica recebe ${fmt(val)}</div>
+      <div class="prow-tiny">cobrar ${fmt(grossed)} · taxa ${pct}% · ${fmt(fee)}</div>`;
     z2.appendChild(row);
   }
 }
